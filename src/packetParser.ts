@@ -5,7 +5,8 @@ export class PacketParser {
     return new Packet(
       message.readInt8(0),
       message.readInt8(1),
-      message.subarray(2, 15)
+      message.readInt8(2),
+      message.subarray(3, 15)
     );
   }
 }
