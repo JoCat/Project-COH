@@ -1,36 +1,31 @@
 import dgram from "node:dgram";
-import { PacketParser } from "./packetParser.js";
-import { PingPacket } from "./packets/ping.js";
+import { Router } from "./router.js";
 
 const server = dgram.createSocket("udp4");
 
 server.on("error", (err) => {
-  console.log(`server error:\n${err.stack}`);
+  console.error(`Server error: ${err.name}\n`);
+  console.error(`message: ${err.message}\n`);
+  console.error(err.stack);
   server.close();
 });
 
-server.on("message", (msg, rinfo) => {
-  log(msg);
-  const packet = PacketParser.parse(msg);
+server.on("message", (message, { port, address }) => {
+  log(message);
 
-  if (packet.type == PingPacket.type) {
-    server.send(
-      new PingPacket(packet.destination, packet.source).toBuffer(),
-      rinfo.port,
-      rinfo.address
-    );
-  }
+  const result = Router.route(message);
+  if (result) server.send(result.toBuffer(), port, address);
 });
 
 server.on("listening", () => {
-  const address = server.address();
-  console.log(`server listening ${address.address}:${address.port}`);
+  const { address, port } = server.address();
+  console.log(`Server listening ${address}:${port}`);
 });
 
 server.bind(30260, "0.0.0.0");
 
 function log(message: Buffer) {
-  console.log(`server got: ${JSON.stringify(message.toJSON().data)}`);
-  console.log("server got:", message);
+  console.log(`Server got: ${JSON.stringify(message.toJSON().data)}`);
+  console.log("Server got:", message);
   console.log("=".repeat(15));
 }
