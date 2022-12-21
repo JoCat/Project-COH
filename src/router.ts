@@ -2,14 +2,14 @@ import { PacketParser } from "./packetParser.js";
 import { MaybeConnectPacket } from "./packets/maybeConnect.js";
 import { Packet } from "./packets/packet.js";
 import { Packet3 } from "./packets/packet3.js";
-import { PingPacket } from "./packets/ping.js";
+import { SynPacket } from "./packets/syn.js";
 
 export class Router {
   static route(message: Buffer) {
     const packet = PacketParser.parse(message);
 
-    if (packet.type == PingPacket.type) {
-      return new PingPacket(packet.destination, packet.source);
+    if (packet.type == SynPacket.type) {
+      return new SynPacket(packet.destination, packet.source);
     }
 
     if (packet.type == MaybeConnectPacket.type) {
