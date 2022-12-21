@@ -4,8 +4,8 @@ import { Router } from "./router.js";
 const server = dgram.createSocket("udp4");
 
 server.on("error", (err) => {
-  console.error(`Server error: ${err.name}\n`);
-  console.error(`message: ${err.message}\n`);
+  console.error(`Server error: ${err.name}`);
+  console.error(`message: ${err.message}`);
   console.error(err.stack);
   server.close();
 });
@@ -25,7 +25,8 @@ server.on("listening", () => {
 server.bind(30260, "0.0.0.0");
 
 function log(message: Buffer) {
-  console.log(`Server got: ${JSON.stringify(message.toJSON().data)}`);
-  console.log("Server got:", message);
-  console.log("=".repeat(15));
+  console.log("Server got:");
+  console.log(JSON.stringify(message.toJSON().data));
+  console.log(message);
+  console.log("=".repeat(30));
 }
