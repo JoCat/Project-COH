@@ -1,7 +1,8 @@
 import { Packet } from "./packet.js";
 
 export class Packet3 extends Packet {
-  static type = 49;
+  static type = 1;
+  static flags = 6;
 
   constructor(source: number, destination: number, payload: Buffer) {
     const ses = payload.readUInt8(0);
@@ -14,6 +15,7 @@ export class Packet3 extends Packet {
       source,
       destination,
       Packet3.type,
+      Packet3.flags,
       Buffer.from([ses, csi, seq, sig, cks])
     );
   }

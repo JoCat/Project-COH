@@ -7,12 +7,16 @@ import { SynPacket } from "./packets/syn.js";
 export class Router {
   static route(message: Buffer) {
     const packet = PacketParser.parse(message);
+    console.log(packet);
 
-    if (packet.type == SynPacket.type) {
+    if (packet.type === SynPacket.type && packet.flags === SynPacket.flags) {
       return new SynPacket(packet.destination, packet.source);
     }
 
-    if (packet.type == MaybeConnectPacket.type) {
+    if (
+      packet.type === MaybeConnectPacket.type &&
+      packet.flags === MaybeConnectPacket.flags
+    ) {
       return new MaybeConnectPacket(
         packet.destination,
         packet.source,
@@ -21,7 +25,7 @@ export class Router {
     }
 
     // TODO хз о чём пакет
-    if (packet.type == Packet3.type) {
+    if (packet.type === Packet3.type && packet.flags === packet.flags) {
       return new Packet3(packet.destination, packet.source, packet.payload);
     }
 
@@ -29,6 +33,7 @@ export class Router {
       packet.destination,
       packet.source,
       packet.type,
+      packet.flags,
       packet.payload
     );
   }
