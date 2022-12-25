@@ -10,7 +10,15 @@ export class SynPacket extends Packet {
       destination,
       SynPacket.type,
       SynPacket.flags,
-      Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 200])
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      Buffer.alloc(0),
+      200, // Checksum
+      15
     );
   }
 }

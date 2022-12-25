@@ -11,10 +11,13 @@ server.on("error", (err) => {
 });
 
 server.on("message", (message, { port, address }) => {
-  log(message);
+  log(message, "Server");
 
   const result = Router.route(message);
-  if (result) server.send(result.toBuffer(), port, address);
+  if (result) {
+    log(result.toBuffer(), "Client");
+    server.send(result.toBuffer(), port, address);
+  }
 });
 
 server.on("listening", () => {
@@ -24,8 +27,8 @@ server.on("listening", () => {
 
 server.bind(30260, "0.0.0.0");
 
-function log(message: Buffer) {
-  console.log("Server got:");
+function log(message: Buffer, target: string) {
+  console.log(`${target} got:`);
   console.log(JSON.stringify(message.toJSON().data));
   console.log(message);
   console.log("=".repeat(30));

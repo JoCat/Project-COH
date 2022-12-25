@@ -1,22 +1,47 @@
+// More info https://github.com/zeroKilo/GROBackendWV/wiki/QPacket-Format
 export class Packet {
   source: number;
   destination: number;
   type: PacketType;
   flags: PacketFlag[];
+  sessionId: number;
+  signature: number;
+  sequenceId: number;
+  connectionSignature: number;
+  partNumber: number;
+  payloadSize: number;
   payload: Buffer;
+  checksum: number;
+  _offset: number;
 
   constructor(
     source: number,
     destination: number,
     type: PacketType,
     flags: PacketFlag[],
-    payload: Buffer
+    sessionId: number,
+    signature: number,
+    sequenceId: number,
+    connectionSignature: number,
+    partNumber: number,
+    payloadSize: number,
+    payload: Buffer,
+    checksum: number,
+    _offset: number
   ) {
     this.source = source;
     this.destination = destination;
     this.type = type;
     this.flags = flags;
+    this.sessionId = sessionId;
+    this.signature = signature;
+    this.sequenceId = sequenceId;
+    this.connectionSignature = connectionSignature;
+    this.partNumber = partNumber;
+    this.payloadSize = payloadSize;
     this.payload = payload;
+    this.checksum = checksum;
+    this._offset = _offset;
   }
 
   includesFlags(flags: PacketFlag[]) {
@@ -24,20 +49,45 @@ export class Packet {
   }
 
   toBuffer() {
-    return Buffer.from([
-      this.source,
-      this.destination,
-      this.#getByteFromTypeAndFlags(),
-      ...this.payload,
-    ]);
+    let offset = 0;
+    const message = Buffer.alloc(this._offset);
+
+    offset = message.writeUInt8(this.source, offset);
+    offset = message.writeUInt8(this.destination, offset);
+    offset = message.writeUInt8(this.#getByteFromTypeAndFlags(), offset);
+    offset = message.writeUInt8(this.sessionId, offset);
+    offset = message.writeUInt32LE(this.signature, offset);
+    offset = message.writeUInt16LE(this.sequenceId, offset);
+
+    if (this.type == PacketType.SYN || this.type == PacketType.CONNECT) {
+      offset = message.writeUInt32LE(this.connectionSignature, offset);
+    }
+
+    if (this.type == PacketType.DATA) {
+      offset = message.writeUInt8(this.partNumber, offset);
+    }
+
+    if (this.flags.includes(PacketFlag.FLAG_HAS_SIZE)) {
+      offset = message.writeUInt16LE(this.payloadSize, offset);
+    }
+
+    this.payload.forEach((value) => {
+      offset = message.writeUInt8(value, offset);
+    });
+
+    message.writeUInt8(this.checksum, offset);
+
+    return message;
   }
 
   #getByteFromTypeAndFlags() {
     let typeAndFlags = this.type;
 
-    const flagsSum = this.flags.reduce((prev, cur) => prev + cur, 0);
+    for (const flag of this.flags) {
+      typeAndFlags |= flag << 3;
+    }
 
-    return typeAndFlags | (flagsSum << 3);
+    return typeAndFlags;
   }
 
   static #getTypeAndFlagsFromByte(byte: number) {
@@ -76,12 +126,62 @@ export class Packet {
   }
 
   static fromRawPacket(message: Buffer) {
-    const source = message.readUInt8(0);
-    const destination = message.readUInt8(1);
-    const { type, flags } = this.#getTypeAndFlagsFromByte(message.readUInt8(2));
-    const payload = message.subarray(3, 15);
+    let offset = 0;
 
-    return new Packet(source, destination, type, flags, payload);
+    const source = message.readUInt8(offset++);
+    const destination = message.readUInt8(offset++);
+    const { type, flags } = this.#getTypeAndFlagsFromByte(
+      message.readUInt8(offset++)
+    );
+    const sessionId = message.readUInt8(offset++);
+    const signature = message.readUInt32LE(offset);
+    offset += 4;
+    const sequenceId = message.readUInt16LE(offset);
+    offset += 2;
+
+    let connectionSignature = 0;
+    let partNumber = 0;
+    let payloadSize;
+
+    if (type == PacketType.SYN || type == PacketType.CONNECT) {
+      connectionSignature = message.readUInt32LE(offset);
+      offset += 4;
+    }
+
+    if (type == PacketType.DATA) {
+      partNumber = message.readUInt8(offset++);
+    }
+
+    if (flags.includes(PacketFlag.FLAG_HAS_SIZE)) {
+      payloadSize = message.readUInt16LE(offset);
+      offset += 2;
+    } else {
+      payloadSize = message.length - offset - 1;
+    }
+
+    let payload = Buffer.alloc(0);
+    if (payloadSize != 0) {
+      payload = message.subarray(offset, payloadSize);
+    }
+
+    offset += payloadSize;
+    const checksum = message.readUInt8(offset++);
+
+    return new Packet(
+      source,
+      destination,
+      type,
+      flags,
+      sessionId,
+      signature,
+      sequenceId,
+      connectionSignature,
+      partNumber,
+      payloadSize,
+      payload,
+      checksum,
+      offset
+    );
   }
 }
 

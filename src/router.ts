@@ -1,6 +1,6 @@
 import { SynAckPacket } from "./packets/synAck.js";
 import { Packet } from "./packets/packet.js";
-import { ConnectPacket } from "./packets/connect.js";
+// import { ConnectPacket } from "./packets/connect.js";
 import { SynPacket } from "./packets/syn.js";
 
 export class Router {
@@ -22,27 +22,38 @@ export class Router {
       return new SynAckPacket(
         packet.destination,
         packet.source,
-        packet.payload
+        packet.type,
+        packet.flags,
+        packet.sessionId,
+        packet.signature,
+        packet.sequenceId,
+        packet.connectionSignature,
+        packet.partNumber,
+        packet.payloadSize,
+        packet.payload,
+        packet.checksum,
+        packet._offset
       );
     }
 
-    if (
-      packet.type === ConnectPacket.type &&
-      packet.includesFlags(ConnectPacket.flags)
-    ) {
-      return new ConnectPacket(
-        packet.destination,
-        packet.source,
-        packet.payload
-      );
-    }
+    //   if (
+    //     packet.type === ConnectPacket.type &&
+    //     packet.includesFlags(ConnectPacket.flags)
+    //   ) {
+    //     return new ConnectPacket(
+    //       packet.destination,
+    //       packet.source,
+    //       packet.payload
+    //     );
+    //   }
 
-    return new Packet(
-      packet.destination,
-      packet.source,
-      packet.type,
-      packet.flags,
-      packet.payload
-    );
+    //   return new Packet(
+    //     packet.destination,
+    //     packet.source,
+    //     packet.type,
+    //     packet.flags,
+    //     packet.payload
+    //   );
+    return undefined;
   }
 }
