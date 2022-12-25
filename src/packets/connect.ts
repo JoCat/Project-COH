@@ -1,8 +1,8 @@
-import { Packet } from "./packet.js";
+import { Packet, PacketFlag, PacketType } from "./packet.js";
 
-export class Packet3 extends Packet {
-  static type = 1;
-  static flags = 6;
+export class ConnectPacket extends Packet {
+  static type = PacketType.CONNECT;
+  static flags = [PacketFlag.FLAG_NEED_ACK, PacketFlag.FLAG_RELIABLE];
 
   constructor(source: number, destination: number, payload: Buffer) {
     const ses = payload.readUInt8(0);
@@ -14,8 +14,8 @@ export class Packet3 extends Packet {
     super(
       source,
       destination,
-      Packet3.type,
-      Packet3.flags,
+      ConnectPacket.type,
+      ConnectPacket.flags,
       Buffer.from([ses, csi, seq, sig, cks])
     );
   }

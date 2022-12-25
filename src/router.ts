@@ -1,32 +1,40 @@
-import { PacketParser } from "./packetParser.js";
-import { MaybeConnectPacket } from "./packets/maybeConnect.js";
+import { SynAckPacket } from "./packets/synAck.js";
 import { Packet } from "./packets/packet.js";
-import { Packet3 } from "./packets/packet3.js";
+import { ConnectPacket } from "./packets/connect.js";
 import { SynPacket } from "./packets/syn.js";
 
 export class Router {
   static route(message: Buffer) {
-    const packet = PacketParser.parse(message);
+    const packet = Packet.fromRawPacket(message);
     console.log(packet);
 
-    if (packet.type === SynPacket.type && packet.flags === SynPacket.flags) {
+    if (
+      packet.type === SynPacket.type &&
+      packet.includesFlags(SynPacket.flags)
+    ) {
       return new SynPacket(packet.destination, packet.source);
     }
 
     if (
-      packet.type === MaybeConnectPacket.type &&
-      packet.flags === MaybeConnectPacket.flags
+      packet.type === SynAckPacket.type &&
+      packet.includesFlags(SynAckPacket.flags)
     ) {
-      return new MaybeConnectPacket(
+      return new SynAckPacket(
         packet.destination,
         packet.source,
         packet.payload
       );
     }
 
-    // TODO хз о чём пакет
-    if (packet.type === Packet3.type && packet.flags === packet.flags) {
-      return new Packet3(packet.destination, packet.source, packet.payload);
+    if (
+      packet.type === ConnectPacket.type &&
+      packet.includesFlags(ConnectPacket.flags)
+    ) {
+      return new ConnectPacket(
+        packet.destination,
+        packet.source,
+        packet.payload
+      );
     }
 
     return new Packet(

@@ -1,8 +1,8 @@
-import { Packet } from "./packet.js";
+import { Packet, PacketFlag, PacketType } from "./packet.js";
 
 export class SynPacket extends Packet {
-  static type = 0;
-  static flags = 4;
+  static type = PacketType.SYN;
+  static flags = [PacketFlag.FLAG_NEED_ACK];
 
   constructor(source: number, destination: number) {
     super(
